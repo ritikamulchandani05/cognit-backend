@@ -26,9 +26,6 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false)
-    private String firstName;
-
     @Column(nullable = false, length = 100)
     private String name;
 
@@ -43,7 +40,7 @@ public class User {
     private String bio;
 
     @Column(length = 255)
-    private String avatarURL;
+    private String avatarUrl;
 
     // Soft delete flag
     @Column(nullable = false)
