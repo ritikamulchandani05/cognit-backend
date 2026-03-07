@@ -9,10 +9,14 @@ import org.ritika.cognitbackend.dto.response.AuthResponse;
 import org.ritika.cognitbackend.dto.response.UserResponse;
 import org.ritika.cognitbackend.entity.User;
 import org.ritika.cognitbackend.enums.Role;
+import org.ritika.cognitbackend.exception.BadRequestException;
+import org.ritika.cognitbackend.exception.ResourceNotFoundException;
+import org.ritika.cognitbackend.exception.UnauthorizedException;
 import org.ritika.cognitbackend.security.JwtUtil;
 import org.ritika.cognitbackend.service.AuthService;
 import org.ritika.cognitbackend.service.UserService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,7 +41,7 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse register(RegisterRequest request) {
         // Check if email already exists
         if (userService.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already registered: " + request.getEmail());
+            throw new BadRequestException("Email already registered: " + request.getEmail());
         }
 
         // Create new user with hashed password
@@ -62,11 +66,11 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse login(LoginRequest request) {
         // Find user by email
         User user = userService.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("Invalid email or password"));
+                .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
 
         // Verify password
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid email or password");
+            throw new UnauthorizedException("Invalid email or password");
         }
 
         // Generate tokens and return response
@@ -80,20 +84,20 @@ public class AuthServiceImpl implements AuthService {
 
         // Validate refresh token
         if (!jwtUtil.validateToken(refreshToken)) {
-            throw new RuntimeException("Invalid or expired refresh token");
+            throw new UnauthorizedException("Invalid or expired refresh token");
         }
 
         // Verify it's a refresh token (not an access token)
         Claims claims = jwtUtil.extractAllClaims(refreshToken);
         String tokenType = claims.get("type", String.class);
         if (!"refresh".equals(tokenType)) {
-            throw new RuntimeException("Invalid token type");
+            throw new UnauthorizedException("Invalid token type");
         }
 
         // Get user from token
         Long userId = jwtUtil.getUserIdFromToken(refreshToken);
         User user = userService.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Generate new tokens and return response
         return buildAuthResponse(user);

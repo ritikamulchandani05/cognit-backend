@@ -2,6 +2,8 @@ package org.ritika.cognitbackend.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.ritika.cognitbackend.entity.User;
+import org.ritika.cognitbackend.exception.BadRequestException;
+import org.ritika.cognitbackend.exception.ResourceNotFoundException;
 import org.ritika.cognitbackend.repository.UserRepository;
 import org.ritika.cognitbackend.service.UserService;
 import org.springframework.stereotype.Service;
@@ -42,7 +44,7 @@ public class UserServiceImpl implements UserService {
     public User updateUser(Long id, User updatedUser) {
         User existingUser = userRepository.findById(id)
                 .filter(user -> !user.getIsDeleted())
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
         if (updatedUser.getName() != null) {
             existingUser.setName(updatedUser.getName());
@@ -62,7 +64,7 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(Long id) {
         User user = userRepository.findById(id)
                 .filter(u -> !u.getIsDeleted())
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
         user.setIsDeleted(true);
         userRepository.save(user);
