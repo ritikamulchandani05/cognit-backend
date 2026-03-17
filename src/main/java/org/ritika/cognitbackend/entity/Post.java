@@ -28,7 +28,7 @@ public class Post {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
-    private User category;
+    private Category category;
 
     @Column(nullable = false, length = 250)
     private String title;
@@ -56,7 +56,6 @@ public class Post {
     @Column(nullable = false)
     @Builder.Default
     private Integer likeCount = 0;
-
 
     @ManyToMany
     @JoinTable(
