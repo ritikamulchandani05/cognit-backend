@@ -3,6 +3,7 @@ package org.ritika.cognitbackend.repository;
 import org.ritika.cognitbackend.entity.Post;
 import org.ritika.cognitbackend.enums.PostStatus;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.Modifying;
@@ -13,10 +14,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
+    @EntityGraph(attributePaths = {"user","category","tags"})
     Page<Post> findByStatusAndIsDeletedFalse(PostStatus status, Pageable pageable);
-
+    @EntityGraph(attributePaths = {"user","category","tags"})
     Page<Post> findByUserIdAndIsDeletedFalse(Long userId, Pageable pageable);
-
+    @EntityGraph(attributePaths = {"user","category","tags"})
     Optional<Post> findBySlugAndIsDeletedFalse(String slug);
 
     Optional<Post> findBySlug(String slug);
@@ -28,10 +30,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
             "OR LOWER(p.content) LIKE LOWER(CONCAT('%', :searchTerm, '%')))"
     )
+    @EntityGraph(attributePaths = {"user","category","tags"})
     Page<Post> searchPublishedPosts(@Param("searchTerm") String searchTerm, Pageable pageable);
-
+    @EntityGraph(attributePaths = {"user","category","tags"})
     Page<Post> findByCategoryIdAndStatusAndIsDeletedFalse(Long id, PostStatus status, Pageable pageable);
-
+    @EntityGraph(attributePaths = {"user","category","tags"})
     List<Post> findByTagsIdAndStatusAndIsDeletedFalse(Long id, PostStatus postStatus);
 
     long countByCategoryId(Long categoryId);
@@ -39,9 +42,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     long countByCategoryIdAndStatusAndIsDeletedFalse(Long categoryId, PostStatus postStatus);
 
     long countByUserIdAndIsDeletedFalse(Long userId);
-
+    @EntityGraph(attributePaths = {"user","category","tags"})
     Page<Post> findByIsDeletedFalse(Pageable pageable);
-
+    @EntityGraph(attributePaths = {"user","category","tags"})
     Page<Post> findByUserIdAndStatusAndIsDeletedFalse(Long userId, PostStatus postStatus, Pageable pageable);
 
     @Modifying
