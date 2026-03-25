@@ -61,7 +61,7 @@ public class PostServiceImpl implements PostService {
         }
 
         // Generate unique slug from title
-        String slug = SlugUtil.generateUniqueSlug(request.getTitle(), postRepository);
+        String slug = SlugUtil.generateUniqueSlug(request.getTitle(),"post", postRepository);
 
         // Create the post
         Post post = Post.builder()
@@ -101,7 +101,7 @@ public class PostServiceImpl implements PostService {
         // Update title and regenerate slug if title changed
         if (request.getTitle() != null) {
             post.setTitle(request.getTitle());
-            String newSlug = SlugUtil.generateUniqueSlug(request.getTitle(), post.getSlug(), postRepository);
+            String newSlug = SlugUtil.generateUniqueSlug(request.getTitle(), post.getSlug(),"post", postRepository);
             post.setSlug(newSlug);
         }
 

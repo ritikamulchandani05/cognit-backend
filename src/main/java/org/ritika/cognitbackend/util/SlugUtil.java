@@ -1,6 +1,6 @@
 package org.ritika.cognitbackend.util;
 
-import org.ritika.cognitbackend.repository.PostRepository;
+import org.ritika.cognitbackend.repository.SluggableRepository;
 
 import java.text.Normalizer;
 import java.util.Locale;
@@ -27,11 +27,11 @@ public class SlugUtil {
         return slug;
     }
 
-    public static String generateUniqueSlug(String title, PostRepository repository) {
+    public static String generateUniqueSlug(String title, String defaultPrefix, SluggableRepository repository) {
         String baseSlug = generateSlug(title);
 
         if (baseSlug.isEmpty()) {
-            baseSlug = "post";
+            baseSlug = defaultPrefix.toLowerCase();
         }
 
         String slug = baseSlug;
@@ -46,11 +46,11 @@ public class SlugUtil {
     }
 
 
-    public static String generateUniqueSlug(String title, String currentSlug, PostRepository repository) {
+    public static String generateUniqueSlug(String title, String currentSlug, String defaultPrefix, SluggableRepository repository) {
         String baseSlug = generateSlug(title);
 
         if (baseSlug.isEmpty()) {
-            baseSlug = "post";
+            baseSlug = defaultPrefix.toLowerCase();
         }
 
         // If the generated slug is the same as current, keep it
