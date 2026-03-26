@@ -7,6 +7,7 @@ import org.ritika.cognitbackend.dto.request.CreatePostRequest;
 import org.ritika.cognitbackend.dto.request.UpdatePostRequest;
 import org.ritika.cognitbackend.dto.response.PostResponse;
 import org.ritika.cognitbackend.entity.User;
+import org.ritika.cognitbackend.exception.BadRequestException;
 import org.ritika.cognitbackend.service.PostService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -177,6 +179,24 @@ public class PostController {
         log.info("Publishing post {} by user: {}", id, user.getEmail());
 
         PostResponse response = postService.publishPost(id, user.getId());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{id}/image")
+    @PreAuthorize("hasAnyRole('AUTHOR', 'ADMIN')")
+    public ResponseEntity<PostResponse> uploadFeaturedImage(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file,
+            @AuthenticationPrincipal User user) {
+
+        log.info("Uploading featured image for post {} by user: {}", id, user.getEmail());
+
+        if (file.isEmpty()) {
+            throw new BadRequestException("File is empty");
+        }
+
+        PostResponse response = postService.uploadFeaturedImage(id, file, user.getId());
 
         return ResponseEntity.ok(response);
     }

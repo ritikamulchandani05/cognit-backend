@@ -3,6 +3,7 @@ import org.ritika.cognitbackend.dto.request.CreatePostRequest;
 import org.ritika.cognitbackend.dto.request.UpdatePostRequest;
 import org.ritika.cognitbackend.dto.response.PostResponse;
 import org.springframework.data.domain.Page;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -44,5 +45,6 @@ public interface PostService {
 
 
     PostResponse publishPost(Long postId, Long userId);
+    PostResponse uploadFeaturedImage(Long postId, MultipartFile file, Long userId);
 }
 

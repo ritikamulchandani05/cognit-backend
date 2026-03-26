@@ -8,6 +8,7 @@ import org.ritika.cognitbackend.entity.Post;
 import org.ritika.cognitbackend.entity.Tag;
 import org.ritika.cognitbackend.entity.User;
 import org.ritika.cognitbackend.enums.PostStatus;
+import org.ritika.cognitbackend.enums.Role;
 import org.ritika.cognitbackend.exception.ResourceNotFoundException;
 import org.ritika.cognitbackend.exception.UnauthorizedException;
 import org.ritika.cognitbackend.mapper.PostMapper;
@@ -15,6 +16,7 @@ import org.ritika.cognitbackend.repository.CategoryRepository;
 import org.ritika.cognitbackend.repository.PostRepository;
 import org.ritika.cognitbackend.repository.TagRepository;
 import org.ritika.cognitbackend.repository.UserRepository;
+import org.ritika.cognitbackend.service.FileStorageService;
 import org.ritika.cognitbackend.service.PostService;
 import org.ritika.cognitbackend.util.SlugUtil;
 import org.springframework.data.domain.Page;
@@ -23,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -41,6 +44,7 @@ public class PostServiceImpl implements PostService {
     private final CategoryRepository categoryRepository;
     private final TagRepository tagRepository;
     private final PostMapper postMapper;
+    private final FileStorageService fileStorageService;
 
     @Override
     @Transactional
@@ -282,6 +286,42 @@ public class PostServiceImpl implements PostService {
             post.setPublishedAt(LocalDateTime.now());
         }
 
+        Post savedPost = postRepository.save(post);
+
+        return postMapper.toResponse(savedPost);
+    }
+
+    @Override
+    @Transactional
+    public PostResponse uploadFeaturedImage(Long postId, MultipartFile file, Long userId) {
+        // 1. Find post
+        Post post = postRepository.findById(postId)
+                .filter(p -> !p.getIsDeleted())
+                .orElseThrow(() -> new ResourceNotFoundException("Post", "id", postId));
+
+        // 2. Find requesting user
+        User user = userRepository.findById(userId)
+                .filter(u -> !u.getIsDeleted())
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+
+        // 3. Verify ownership or ADMIN role
+        boolean isOwner = post.getUser().getId().equals(userId);
+        boolean isAdmin = user.getRole() == Role.ADMIN;
+
+        if (!isOwner && !isAdmin) {
+            throw new UnauthorizedException("You are not authorized to upload an image for this post");
+        }
+
+        // 4. Delete old featured image if present
+        if (post.getFeaturedImageUrl() != null && !post.getFeaturedImageUrl().isBlank()) {
+            fileStorageService.deleteFile(post.getFeaturedImageUrl());
+        }
+
+        // 5. Store new file
+        String newImagePath = fileStorageService.storeFile(file, "posts");
+
+        // 6. Update and save
+        post.setFeaturedImageUrl(newImagePath);
         Post savedPost = postRepository.save(post);
 
         return postMapper.toResponse(savedPost);
