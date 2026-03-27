@@ -11,6 +11,7 @@ import org.ritika.cognitbackend.exception.BadRequestException;
 import org.ritika.cognitbackend.service.PostService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,16 +30,21 @@ public class PostController {
     private final PostService postService;
 
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('AUTHOR', 'ADMIN')")
     public ResponseEntity<PostResponse> createPost(
-            @Valid @RequestBody CreatePostRequest request,
+            @Valid @RequestPart("post") CreatePostRequest request,
+            @RequestPart(value="file", required=false) MultipartFile file,
             @AuthenticationPrincipal User user) {
 
         log.info("Creating post with title: '{}' by user: {}", request.getTitle(), user.getEmail());
 
         PostResponse response = postService.createPost(request, user.getId());
 
+        if (file != null && !file.isEmpty()) {
+            log.info("Uploading post with title: '{}' by user: {}", request.getTitle(), user.getEmail());
+            response = postService.uploadFeaturedImage(response.getId(),file,user.getId());
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
