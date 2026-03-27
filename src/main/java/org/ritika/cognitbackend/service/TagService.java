@@ -38,5 +38,7 @@ public interface TagService {
 
 
     boolean existsByName(String name);
+
+    TagResponse updateTag(Long id, CreateTagRequest request);
 }
 

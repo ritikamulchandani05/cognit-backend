@@ -214,4 +214,30 @@ public class TagServiceImpl implements TagService {
 
         return slug;
     }
+
+    @Override
+    @Transactional
+    public TagResponse updateTag(Long id, CreateTagRequest request) {
+        Tag tag = tagRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tag", "id", id));
+
+        String normalizedName = normalizeTagName(request.getName());
+
+        // Check if the new name conflicts with a different existing tag
+        if (!tag.getName().equals(normalizedName) && tagRepository.existsByName(normalizedName)) {
+            throw new BadRequestException("Tag with name '" + normalizedName + "' already exists");
+        }
+
+        // Update name and regenerate slug if name changed
+        if (!tag.getName().equals(normalizedName)) {
+            tag.setName(normalizedName);
+            String newSlug = generateSlug(normalizedName);
+            tag.setSlug(ensureUniqueSlug(newSlug, tag.getSlug()));
+        }
+
+        Tag savedTag = tagRepository.save(tag);
+
+        return tagMapper.toResponse(savedTag);
+    }
+
 }
