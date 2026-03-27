@@ -48,7 +48,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
-    public PostResponse createPost(CreatePostRequest request, Long userId) {
+    public PostResponse createPost(CreatePostRequest request, MultipartFile file, Long userId) {
         // Find the author
         User author = userRepository.findById(userId)
                 .filter(user -> !user.getIsDeleted())
@@ -67,6 +67,12 @@ public class PostServiceImpl implements PostService {
         // Generate unique slug from title
         String slug = SlugUtil.generateUniqueSlug(request.getTitle(),"post", postRepository);
 
+        // Upload featured image if provided and get its URL
+        String featuredImageUrl = request.getFeaturedImageUrl();
+        if (file != null && !file.isEmpty()) {
+            featuredImageUrl = fileStorageService.storeFile(file, "posts");
+        }
+
         // Create the post
         Post post = Post.builder()
                 .user(author)
@@ -75,7 +81,7 @@ public class PostServiceImpl implements PostService {
                 .slug(slug)
                 .content(request.getContent())
                 .excerpt(request.getExcerpt())
-                .featuredImageUrl(request.getFeaturedImageUrl())
+                .featuredImageUrl(featuredImageUrl)
                 .status(request.getStatus() != null ? request.getStatus() : PostStatus.DRAFT)
                 .tags(tags)
                 .build();

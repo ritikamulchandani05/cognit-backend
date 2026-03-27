@@ -39,12 +39,7 @@ public class PostController {
 
         log.info("Creating post with title: '{}' by user: {}", request.getTitle(), user.getEmail());
 
-        PostResponse response = postService.createPost(request, user.getId());
-
-        if (file != null && !file.isEmpty()) {
-            log.info("Uploading post with title: '{}' by user: {}", request.getTitle(), user.getEmail());
-            response = postService.uploadFeaturedImage(response.getId(),file,user.getId());
-        }
+        PostResponse response = postService.createPost(request, file, user.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
