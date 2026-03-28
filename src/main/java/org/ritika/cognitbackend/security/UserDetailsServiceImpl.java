@@ -1,8 +1,7 @@
 package org.ritika.cognitbackend.security;
 
 import lombok.RequiredArgsConstructor;
-import org.ritika.cognitbackend.entity.User;
-import org.ritika.cognitbackend.service.UserService;
+import org.ritika.cognitbackend.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -16,22 +15,12 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class UserDetailsServiceImpl implements UserDetailsService {
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userService.findByEmail(email)
+        return userRepository.findByEmailAndIsDeletedFalse(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
-
-        return org.springframework.security.core.userdetails.User.builder()
-                .username(user.getEmail())
-                .password(user.getPassword())
-                .authorities("ROLE_" + user.getRole().name())
-                .accountExpired(false)
-                .accountLocked(false)
-                .credentialsExpired(false)
-                .disabled(user.getIsDeleted())
-                .build();
     }
 
     /**
@@ -42,17 +31,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
      * @return UserDetails for the user
      */
     public UserDetails loadUserById(Long userId) {
-        User user = userService.findById(userId)
+        return userRepository.findById(userId)
+                .filter(u ->!u.getIsDeleted())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with id: " + userId));
-
-        return org.springframework.security.core.userdetails.User.builder()
-                .username(user.getEmail())
-                .password(user.getPassword())
-                .authorities("ROLE_" + user.getRole().name())
-                .accountExpired(false)
-                .accountLocked(false)
-                .credentialsExpired(false)
-                .disabled(user.getIsDeleted())
-                .build();
     }
 }

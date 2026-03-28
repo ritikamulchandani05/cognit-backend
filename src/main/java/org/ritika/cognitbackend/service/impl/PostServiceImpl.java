@@ -69,9 +69,7 @@ public class PostServiceImpl implements PostService {
 
         // Upload featured image if provided and get its URL
         String featuredImageUrl = request.getFeaturedImageUrl();
-        if (file != null && !file.isEmpty()) {
-            featuredImageUrl = fileStorageService.storeFile(file, "posts");
-        }
+        featuredImageUrl = fileStorageService.storeFile(file, "posts");
 
         // Create the post
         Post post = Post.builder()
