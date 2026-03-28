@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.ritika.cognitbackend.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -43,9 +44,25 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers("/api/v1/posts/**").permitAll()
-                        .requestMatchers("/api/v1/categories/**").permitAll()
-                        .requestMatchers("/api/v1/tags/**").permitAll()
+
+                        // Posts - reading published posts is public, all writes require a token + role
+                        .requestMatchers(HttpMethod.GET,"/api/v1/posts/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/v1/posts/**").hasAnyRole("AUTHOR", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT,"/api/v1/posts/**").hasAnyRole("AUTHOR", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE,"/api/v1/posts/**").hasAnyRole("AUTHOR", "ADMIN")
+
+                        // Categories - browsing is public; taxonomy management is ADMIN-only.
+                        .requestMatchers(HttpMethod.GET,"/api/v1/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/v1/categories/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT,"/api/v1/categories/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE,"/api/v1/categories/**").hasRole("ADMIN")
+
+                        // Tags - browsing is public; tag management is ADMIN-only.
+                        .requestMatchers(HttpMethod.GET,"/api/v1/tags/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/v1/tags/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT,"/api/v1/tags/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE,"/api/v1/tags/**").hasRole("ADMIN")
+
                         .requestMatchers("/swagger-ui/**","/v3/api-docs/**",
                                 "/swagger-ui.html").permitAll()
                         .anyRequest().authenticated()
