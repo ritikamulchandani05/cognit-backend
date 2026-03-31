@@ -19,18 +19,13 @@ import org.ritika.cognitbackend.repository.UserRepository;
 import org.ritika.cognitbackend.service.FileStorageService;
 import org.ritika.cognitbackend.service.PostService;
 import org.ritika.cognitbackend.util.SlugUtil;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -218,11 +213,23 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public Page<PostResponse> searchPosts(String query, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("publishedAt").descending());
+        Pageable pageable = PageRequest.of(page, size);
 
-        Page<Post> posts = postRepository.searchPublishedPosts(query, pageable);
+        Page<Long> idPage = postRepository.findPublishedPostIdsByFullTextSearch(query, pageable);
 
-        return posts.map(postMapper::toResponse);
+        if (idPage.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<Post> posts = postRepository.findByIdIn(idPage.getContent());
+
+        Map<Long,Post> byId = posts.stream().collect(Collectors.toMap(Post::getId, p -> p));
+        List<PostResponse> ordered = idPage.getContent().stream()
+                .map(byId::get)
+                .filter(Objects::nonNull)
+                .map(postMapper::toResponse)
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(ordered, pageable, idPage.getTotalElements());
     }
 
     @Override

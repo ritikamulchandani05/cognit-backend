@@ -25,13 +25,20 @@ public interface PostRepository extends JpaRepository<Post, Long>,SluggableRepos
 
     boolean existsBySlug(String slug);
 
-    @Query("SELECT p FROM Post p WHERE p.isDeleted = false " +
-            "AND p.status = 'PUBLISHED'" +
-            "AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
-            "OR LOWER(p.content) LIKE LOWER(CONCAT('%', :searchTerm, '%')))"
+    @Query(
+            value = "SELECT p.id FROM posts p "+
+                    "WHERE p.is_deleted = false "+
+                    "AND p.status = 'PUBLISHED' "+
+                    "AND p.search_vector @@ plainto_tsquery('english',:query) "+
+                    "ORDER BY p.published_at DESC",
+            countQuery = "SELECT COUNT(p.id) FROM posts p "+
+                    "WHERE p.is_deleted = false "+
+                    "AND p.status = 'PUBLISHED' "+
+                    "AND p.search_vector @@ plainto_tsquery('english',:query)",
+            nativeQuery = true
     )
-    @EntityGraph(attributePaths = {"user","category","tags"})
-    Page<Post> searchPublishedPosts(@Param("searchTerm") String searchTerm, Pageable pageable);
+    Page<Long> findPublishedPostIdsByFullTextSearch(@Param("query") String query, Pageable pageable);
+
     @EntityGraph(attributePaths = {"user","category","tags"})
     Page<Post> findByCategoryIdAndStatusAndIsDeletedFalse(Long id, PostStatus status, Pageable pageable);
     @EntityGraph(attributePaths = {"user","category","tags"})
@@ -59,8 +66,8 @@ public interface PostRepository extends JpaRepository<Post, Long>,SluggableRepos
     @Query("UPDATE Post p SET p.likeCount = CASE WHEN p.likeCount > 0 THEN p.likeCount - 1 ELSE 0 END WHERE p.id = :postId")
     void decrementLikeCount(@Param("postId") Long postId);
 
-
-
-
+    @EntityGraph(attributePaths = {"user","category","tags"})
+    @Query("SELECT p FROM Post p WHERE p.id IN :ids")
+    List<Post> findByIdIn(@Param("ids") List<Long> ids);
 }
 
