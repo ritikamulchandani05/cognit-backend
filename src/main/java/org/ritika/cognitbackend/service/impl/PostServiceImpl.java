@@ -19,6 +19,7 @@ import org.ritika.cognitbackend.repository.UserRepository;
 import org.ritika.cognitbackend.service.FileStorageService;
 import org.ritika.cognitbackend.service.PostService;
 import org.ritika.cognitbackend.util.SlugUtil;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -170,6 +171,7 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    @Cacheable(value = "posts", key = "#postId")
     public PostResponse getPostById(Long postId) {
         Post post = postRepository.findById(postId)
                 .filter(p -> !p.getIsDeleted())
@@ -179,6 +181,7 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    @Cacheable(value = "posts", key = "#slug")
     public PostResponse getPostBySlug(String slug) {
         Post post = postRepository.findBySlugAndIsDeletedFalse(slug)
                 .orElseThrow(() -> new ResourceNotFoundException("Post", "slug", slug));
@@ -187,6 +190,7 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    @Cacheable(value = "posts", key = "'all_' + #page + '_' + #size + '_' + #sortBy + '_' + #sortDir", condition = "#page == 0")
     public Page<PostResponse> getAllPosts(int page, int size, String sortBy, String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase("asc")
                 ? Sort.by(sortBy).ascending()
