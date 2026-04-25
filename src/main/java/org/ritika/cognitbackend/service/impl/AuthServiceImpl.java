@@ -14,6 +14,7 @@ import org.ritika.cognitbackend.exception.ResourceNotFoundException;
 import org.ritika.cognitbackend.exception.UnauthorizedException;
 import org.ritika.cognitbackend.security.JwtUtil;
 import org.ritika.cognitbackend.service.AuthService;
+import org.ritika.cognitbackend.service.EmailService;
 import org.ritika.cognitbackend.service.UserService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -32,6 +33,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final EmailService emailService;
 
     @Value("${jwt.access-token-expiration}")
     private long accessTokenExpiration;
@@ -56,6 +58,9 @@ public class AuthServiceImpl implements AuthService {
 
         // Save user
         user = userService.createUser(user);
+
+        // Fire-and-Forget: send welcome email on background thread
+        emailService.sendWelcomeEmail(user);
 
         // Generate tokens and return response
         return buildAuthResponse(user);
