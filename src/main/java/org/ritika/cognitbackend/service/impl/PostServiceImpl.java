@@ -3,6 +3,7 @@ import lombok.RequiredArgsConstructor;
 import org.ritika.cognitbackend.dto.request.CreatePostRequest;
 import org.ritika.cognitbackend.dto.request.UpdatePostRequest;
 import org.ritika.cognitbackend.dto.response.PostResponse;
+import org.ritika.cognitbackend.dto.response.RestPage;
 import org.ritika.cognitbackend.entity.Category;
 import org.ritika.cognitbackend.entity.Post;
 import org.ritika.cognitbackend.entity.Tag;
@@ -45,7 +46,6 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "posts", allEntries = true)
     public PostResponse createPost(CreatePostRequest request, MultipartFile file, Long userId) {
         // Find the author
         User author = userRepository.findById(userId)
@@ -195,7 +195,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Cacheable(value = "posts", key = "'all_' + #page + '_' + #size + '_' + #sortBy + '_' + #sortDir", condition = "#page == 0")
-    public Page<PostResponse> getAllPosts(int page, int size, String sortBy, String sortDir) {
+    public RestPage<PostResponse> getAllPosts(int page, int size, String sortBy, String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase("asc")
                 ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
@@ -206,13 +206,13 @@ public class PostServiceImpl implements PostService {
                 PostStatus.PUBLISHED,
                 pageable
         );
-
-        return posts.map(postMapper::toResponse);
+        // wrapped in RestPage so jackson can deserialize it on cache read-back
+        return new RestPage<>(posts.map(postMapper::toResponse));
     }
 
     @Override
     public Page<PostResponse> getPostsByUser(Long userId, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Pageable pageable = PageRequest.of(page, size, Sort.by("publishedAt").descending());
 
         Page<Post> posts = postRepository.findByUserIdAndIsDeletedFalse(userId, pageable);
 
