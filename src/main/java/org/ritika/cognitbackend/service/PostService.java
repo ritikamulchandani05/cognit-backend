@@ -2,6 +2,7 @@ package org.ritika.cognitbackend.service;
 import org.ritika.cognitbackend.dto.request.CreatePostRequest;
 import org.ritika.cognitbackend.dto.request.UpdatePostRequest;
 import org.ritika.cognitbackend.dto.response.PostResponse;
+import org.ritika.cognitbackend.dto.response.RestPage;
 import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,7 +26,7 @@ public interface PostService {
     PostResponse getPostBySlug(String slug);
 
 
-    Page<PostResponse> getAllPosts(int page, int size, String sortBy, String sortDir);
+    RestPage<PostResponse> getAllPosts(int page, int size, String sortBy, String sortDir);
 
 
     Page<PostResponse> getPostsByUser(Long userId, int page, int size);
