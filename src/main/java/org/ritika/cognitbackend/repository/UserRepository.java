@@ -3,10 +3,12 @@ package org.ritika.cognitbackend.repository;
 import org.ritika.cognitbackend.entity.User;
 import org.ritika.cognitbackend.enums.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,4 +28,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "AND (LOWER(u.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
             "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
     List<User> searchActiveUsers(@Param("searchTerm") String searchTerm);
+    @Modifying
+    @Query("DELETE FROM User u WHERE u.isDeleted = true AND u.updatedAt < :cutoff")
+    int hardDeleteByIsDeletedTrueAndUpdatedAtBefore(@Param("cutoff") LocalDateTime cutoff);
+
+    long countByIsDeletedTrue();
+
+    @Modifying
+    @Query("UPDATE User u SET u.updatedAt = :updatedAt WHERE u.id = :id")
+    void backdateUpdatedAt(@Param("id") Long id, @Param("updatedAt") LocalDateTime updatedAt);
 }

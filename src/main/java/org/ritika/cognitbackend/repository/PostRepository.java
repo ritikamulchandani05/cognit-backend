@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -69,5 +70,15 @@ public interface PostRepository extends JpaRepository<Post, Long>,SluggableRepos
     @EntityGraph(attributePaths = {"user","category","tags"})
     @Query("SELECT p FROM Post p WHERE p.id IN :ids")
     List<Post> findByIdIn(@Param("ids") List<Long> ids);
+
+    @Modifying
+    @Query("DELETE FROM Post p WHERE p.isDeleted = true AND p.updatedAt < :cutoff")
+    int hardDeleteByIsDeletedTrueAndUpdatedAtBefore(@Param("cutoff") LocalDateTime cutoff);
+
+    long countByIsDeletedTrue();
+
+    @Modifying
+    @Query("UPDATE Post p SET p.updatedAt = :updatedAt WHERE p.id = :id")
+    void backdateUpdatedAt(@Param("id") Long id, @Param("updatedAt") LocalDateTime updatedAt);
 }
 
