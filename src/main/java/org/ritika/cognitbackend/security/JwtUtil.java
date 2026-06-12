@@ -92,12 +92,35 @@ public class JwtUtil {
     }
 
     public String generateTempToken(User user) {
-        return Jwts.builder()
-                .subject(String.valueOf(user.getId()))
-                .claim("type", "temp")
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + 120_000L))
-                .signWith(getSigningKey())
-                .compact();
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("type", "temp");
+
+        return buildToken(
+                claims,
+                user.getId().toString(),
+                120_000L
+        );
     }
+
+    public String getTokenType(String token) {
+        return extractAllClaims(token)
+                .get("type", String.class);
+    }
+
+
+    public boolean validateAccessToken(String token) {
+        return validateToken(token)
+                && "access".equals(getTokenType(token));
+    }
+
+    public boolean validateRefreshToken(String token) {
+        return validateToken(token)
+                && "refresh".equals(getTokenType(token));
+    }
+
+    public boolean validateTempToken(String token) {
+        return validateToken(token)
+                && "temp".equals(getTokenType(token));
+    }
+
 }

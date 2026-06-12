@@ -70,7 +70,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public AuthResponse login(LoginRequest request) {
         User user = userService.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
@@ -140,7 +140,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponse verifyOtp(VerifyOtpRequest request) {
-        if (!jwtUtil.validateToken(request.getTempToken())) {
+        if (!jwtUtil.validateTempToken(request.getTempToken())) {
             throw new UnauthorizedException("Invalid or expired session");
         }
         Claims claims = jwtUtil.extractAllClaims(request.getTempToken());

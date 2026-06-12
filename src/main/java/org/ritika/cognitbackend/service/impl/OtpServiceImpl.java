@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 public class OtpServiceImpl implements OtpService {
 
     private static final SecureRandom RANDOM = new SecureRandom();

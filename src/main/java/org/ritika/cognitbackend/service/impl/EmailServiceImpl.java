@@ -326,7 +326,7 @@ public class EmailServiceImpl implements EmailService {
             </h2>
             <p style="margin:0 0 12px;font-size:15px;line-height:1.7;color:#475569;">
               Hi %s, use the code below to complete your sign-in.
-              It expires in <strong>10 minutes</strong>.
+              It expires in <strong>2 minutes</strong>.
             </p>
             <div style="margin:24px auto;padding:20px 40px;background:#f1f5f9;
                         border-radius:12px;text-align:center;width:fit-content;">
