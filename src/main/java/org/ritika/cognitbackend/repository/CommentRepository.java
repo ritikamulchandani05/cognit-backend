@@ -24,4 +24,6 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     int hardDeleteByIsDeletedTrueAndUpdatedAtBefore(@Param("cutoff") LocalDateTime cutoff);
 
     long countByIsDeletedTrue();
+
+    Page<Comment> findByAuthorIdAndIsDeletedFalse(Long authorId, Pageable pageable);
 }

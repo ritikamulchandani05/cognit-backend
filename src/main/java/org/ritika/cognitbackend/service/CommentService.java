@@ -14,4 +14,6 @@ public interface CommentService {
     CommentResponse updateComment(Long commentId, UpdateCommentRequest request, Long userId);
 
     void deleteComment(Long commentId, Long userId);
+
+    Page<CommentResponse> getCommentsByUser(Long userId, int page, int size);
 }

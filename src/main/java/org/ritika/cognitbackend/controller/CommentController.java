@@ -81,4 +81,18 @@ public class CommentController {
         commentService.deleteComment(commentId, user.getId());
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * All non-deleted comments by the authenticated user, newest first.
+     */
+    @GetMapping("/api/v1/comments/mine")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<CommentResponse>> myComments(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @AuthenticationPrincipal User user) {
+
+        Page<CommentResponse> result = commentService.getCommentsByUser(user.getId(), page, size);
+        return ResponseEntity.ok(result);
+    }
 }

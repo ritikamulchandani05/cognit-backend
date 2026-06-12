@@ -114,4 +114,12 @@ public class CommentServiceImpl implements CommentService {
         commentRepository.save(comment);
         log.info("User {} soft-deleted comment {}", userId, commentId);
     }
+
+    // CommentServiceImpl
+    @Override
+    public Page<CommentResponse> getCommentsByUser(Long userId, int page, int size) {
+        PageRequest pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        return commentRepository.findByAuthorIdAndIsDeletedFalse(userId, pageable)
+                .map(CommentResponse::fromEntity);
+    }
 }
