@@ -31,6 +31,7 @@ public class PostResponse {
     private LocalDateTime publishedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Long commentCount;
 
 
     public static PostResponse fromEntity(Post post) {

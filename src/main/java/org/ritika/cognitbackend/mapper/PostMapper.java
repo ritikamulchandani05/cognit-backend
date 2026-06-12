@@ -5,6 +5,8 @@ import org.ritika.cognitbackend.dto.response.CategoryResponse;
 import org.ritika.cognitbackend.dto.response.PostResponse;
 import org.ritika.cognitbackend.dto.response.TagResponse;
 import org.ritika.cognitbackend.entity.Post;
+import org.ritika.cognitbackend.repository.CommentRepository;
+import org.ritika.cognitbackend.repository.PostRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -16,12 +18,14 @@ public class PostMapper {
     private final UserMapper userMapper;
     private final TagMapper tagMapper;
     private final CategoryMapper categoryMapper;
+    private final CommentRepository commentRepository;
 
     @Autowired
-    public PostMapper(UserMapper userMapper, TagMapper tagMapper, CategoryMapper categoryMapper) {
+    public PostMapper(UserMapper userMapper, TagMapper tagMapper, CategoryMapper categoryMapper, CommentRepository commentRepository) {
         this.userMapper = userMapper;
         this.tagMapper = tagMapper;
         this.categoryMapper = categoryMapper;
+        this.commentRepository = commentRepository;
     }
     public PostResponse toResponse(Post post) {
         if(post == null) {
@@ -45,6 +49,9 @@ public class PostMapper {
         response.setAuthor(userMapper.toAuthorResponse(post.getUser()));
         response.setCategory(categoryMapper.toResponse(post.getCategory()));
         response.setTags(tagMapper.toResponseList(post.getTags()));
+        response.setCommentCount(
+                commentRepository.countByPostIdAndIsDeletedFalse(post.getId())
+        );
         return response;
     }
 
