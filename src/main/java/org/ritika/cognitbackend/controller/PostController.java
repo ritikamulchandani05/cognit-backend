@@ -1,5 +1,6 @@
 package org.ritika.cognitbackend.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +19,12 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 
 @RestController
@@ -200,6 +206,59 @@ public class PostController {
         PostResponse response = postService.uploadFeaturedImage(id, file, user.getId());
 
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Toggle like on a post. Requires authentication.
+     */
+    @PostMapping("/{postId}/like")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Map<String, Object>> toggleLike(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal User user) {
+
+        boolean liked = postService.toggleLike(postId, user.getId());
+        return ResponseEntity.ok(Map.of("liked", liked));
+    }
+
+    private static String sha256(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(input.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder(64);
+            for (byte b : hash) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 unavailable", e);
+        }
+    }
+
+    /**
+     * Record a view.
+     * Authenticated users are identified by their user id.
+     * Anonymous users are identified by a SHA-256 fingerprint of IP + User-Agent.
+     */
+    @PostMapping("/{postId}/view")
+    public ResponseEntity<Void> recordView(
+            @PathVariable Long postId,
+            HttpServletRequest httpRequest,
+            @AuthenticationPrincipal(errorOnInvalidType = false) User user) {
+
+        String fingerprint = null;
+        Long   userId      = null;
+
+        if (user != null) {
+            userId = user.getId();
+        } else {
+            // Compute a stable, anonymous daily fingerprint
+            String ip = Optional.ofNullable(httpRequest.getHeader("X-Forwarded-For"))
+                    .orElse(httpRequest.getRemoteAddr());
+            String ua = Optional.ofNullable(httpRequest.getHeader("User-Agent")).orElse("");
+            fingerprint = sha256(ip + "|" + ua);
+        }
+
+        postService.recordView(postId, userId, fingerprint);
+        return ResponseEntity.accepted().build();
     }
 }
 

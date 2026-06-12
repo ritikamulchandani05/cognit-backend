@@ -50,6 +50,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/posts/*/comments/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/v1/posts/*/comments/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/posts/*/comments/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/posts/*/view").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/posts/*/like").authenticated()
 
                         // Posts - reading published posts is public, all writes require a token + role
                         .requestMatchers(HttpMethod.GET,"/api/v1/posts/**").permitAll()

@@ -32,6 +32,7 @@ public class PostResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Long commentCount;
+    private Boolean hasLiked;   // null for anonymous callers
 
 
     public static PostResponse fromEntity(Post post) {
