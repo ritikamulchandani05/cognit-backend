@@ -2,6 +2,7 @@ package org.ritika.cognitbackend.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ritika.cognitbackend.repository.CommentRepository;
 import org.ritika.cognitbackend.repository.OtpRepository;
 import org.ritika.cognitbackend.repository.PostRepository;
 import org.ritika.cognitbackend.repository.UserRepository;
@@ -19,6 +20,7 @@ public class CleanupServiceImpl implements CleanupService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final OtpRepository otpRepository;
+    private final CommentRepository commentRepository;
 
     /**
      * Number of days a soft-deleted record is kept before hard-deletion.
@@ -67,6 +69,8 @@ public class CleanupServiceImpl implements CleanupService {
         log.info("[CleanupJob] logDatabaseStats starting");
         long softDeletedPosts = postRepository.countByIsDeletedTrue();
         long softDeletedUsers = userRepository.countByIsDeletedTrue();
+        long softDeletedComments = commentRepository.countByIsDeletedTrue();
+        log.info("... soft-deleted comments: {}", softDeletedComments);
 
         long duration = System.currentTimeMillis() - start;
         log.info("[CleanupJob] logDatabaseStats complete in {}ms - " + "soft-deleted posts: {}, soft-deleted users:{}", duration, softDeletedPosts, softDeletedUsers);
@@ -83,5 +87,17 @@ public class CleanupServiceImpl implements CleanupService {
         int deleted = otpRepository.deleteExpiredOtps(cutoff);
         long duration = System.currentTimeMillis() - start;
         log.info("[CleanupJob] purgeExpiredOtps completed - {} row(s) removed in {}ms", deleted, duration);
+    }
+
+    @Override
+    @Scheduled(cron = "${cleanup.cron.purge-comments}")
+    @Transactional
+    public void purgeDeletedComments() {
+        long start = System.currentTimeMillis();
+        log.info("[CleanupJob] purgeDeletedComments starting - retention window: {} days", retentionDays);
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(retentionDays);
+        int deleted = commentRepository.hardDeleteByIsDeletedTrueAndUpdatedAtBefore(cutoff);
+        long duration = System.currentTimeMillis() - start;
+        log.info("[CleanupJob] purgeDeletedComments completed - {} comment(s) hard-deleted in {}ms", deleted, duration);
     }
 }

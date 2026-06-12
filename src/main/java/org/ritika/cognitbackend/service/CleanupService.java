@@ -5,4 +5,5 @@ public interface CleanupService {
     void purgeDeletedUsers();
     void logDatabaseStats();
     void purgeExpiredOtps();
+    void purgeDeletedComments();
 }

@@ -4,9 +4,12 @@ import org.ritika.cognitbackend.entity.Comment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.time.LocalDateTime;
 
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Long> {
@@ -15,4 +18,10 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     Page<Comment> findByPostIdAndIsDeletedFalse(@Param("postId") Long postId, Pageable pageable);
 
     long countByPostIdAndIsDeletedFalse(Long postId);
+
+    @Modifying
+    @Query("DELETE FROM Comment c WHERE c.isDeleted = true AND c.updatedAt < :cutoff")
+    int hardDeleteByIsDeletedTrueAndUpdatedAtBefore(@Param("cutoff") LocalDateTime cutoff);
+
+    long countByIsDeletedTrue();
 }
