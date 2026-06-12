@@ -11,4 +11,5 @@ public interface EmailService {
     void sendPasswordResetEmail(User user, String resetToken);
     void sendCommentNotification(User postAuthor, Comment comment);
     void sendWeeklyDigest(User user, List<Post> popularPosts);
+    void sendOtpEmail(User user, String otp);
 }

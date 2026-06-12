@@ -307,4 +307,35 @@ public class EmailServiceImpl implements EmailService {
             log.error("[EMAIL] Failed to send WEEKLY_DIGEST email to {}: {}", user.getEmail(), e.getMessage(), e);
         }
     }
+
+    @Override
+    @Async("taskExecutor")
+    public void sendOtpEmail(User user, String otp) {
+        try {
+            log.info("[EMAIL] Preparing OTP email for user id={}", user.getId());
+            doSend(user.getEmail(), "Your Cognit verification code", buildOtpHtml(user, otp), EmailType.OTP);
+        } catch (Exception e) {
+            log.error("[EMAIL] Failed to send OTP email to {}: {}", user.getEmail(), e.getMessage(), e);
+        }
+    }
+
+    private String buildOtpHtml(User user, String otp) {
+        String body = """
+            <h2 style="margin:0 0 16px;font-size:24px;color:#1e293b;font-weight:700;">
+              Your verification code
+            </h2>
+            <p style="margin:0 0 12px;font-size:15px;line-height:1.7;color:#475569;">
+              Hi %s, use the code below to complete your sign-in.
+              It expires in <strong>10 minutes</strong>.
+            </p>
+            <div style="margin:24px auto;padding:20px 40px;background:#f1f5f9;
+                        border-radius:12px;text-align:center;width:fit-content;">
+              <span style="font-size:36px;font-weight:700;letter-spacing:8px;color:#1e293b;">%s</span>
+            </div>
+            <p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:#94a3b8;">
+              If you didn't request this code, you can safely ignore this email.
+            </p>
+            """.formatted(escapeHtml(user.getName()), otp);
+        return htmlHeader() + body + htmlFooter();
+    }
 }
