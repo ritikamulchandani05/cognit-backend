@@ -2,10 +2,7 @@ package org.ritika.cognitbackend.service.impl;
 
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
-import org.ritika.cognitbackend.dto.request.LoginRequest;
-import org.ritika.cognitbackend.dto.request.RefreshTokenRequest;
-import org.ritika.cognitbackend.dto.request.RegisterRequest;
-import org.ritika.cognitbackend.dto.request.VerifyOtpRequest;
+import org.ritika.cognitbackend.dto.request.*;
 import org.ritika.cognitbackend.dto.response.AuthResponse;
 import org.ritika.cognitbackend.dto.response.UserResponse;
 import org.ritika.cognitbackend.entity.User;
@@ -157,6 +154,34 @@ public class AuthServiceImpl implements AuthService {
         User user = userService.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return buildAuthResponse(user);
+    }
+
+    @Override
+    @Transactional
+    public void forgotPassword(ForgotPasswordRequest request) {
+        // Silently succeed even if email not found (enumeration prevention)
+        userService.findByEmail(request.getEmail()).ifPresent(user -> {
+            String resetToken = jwtUtil.generatePasswordResetToken(user);  // 15-min TTL, type="pwd_reset"
+            emailService.sendPasswordResetEmail(user, resetToken);
+        });
+    }
+
+    @Override
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        if (!jwtUtil.validateToken(request.getToken())) {
+            throw new UnauthorizedException("Invalid or expired reset token");
+        }
+        Claims claims = jwtUtil.extractAllClaims(request.getToken());
+        if (!"pwd_reset".equals(claims.get("type", String.class))) {
+            throw new UnauthorizedException("Invalid token type");
+        }
+        Long userId = jwtUtil.getUserIdFromToken(request.getToken());
+        User user   = userService.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userService.createUser(user);   // save through existing path
     }
 
 }

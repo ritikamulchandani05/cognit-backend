@@ -123,4 +123,14 @@ public class JwtUtil {
                 && "temp".equals(getTokenType(token));
     }
 
+    public String generatePasswordResetToken(User user) {
+        return Jwts.builder()
+                .subject(String.valueOf(user.getId()))
+                .claim("type", "pwd_reset")
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 900_000L)) // 15 min
+                .signWith(getSigningKey())
+                .compact();
+    }
+
 }

@@ -1,10 +1,7 @@
 package org.ritika.cognitbackend.service;
 
 
-import org.ritika.cognitbackend.dto.request.LoginRequest;
-import org.ritika.cognitbackend.dto.request.RefreshTokenRequest;
-import org.ritika.cognitbackend.dto.request.RegisterRequest;
-import org.ritika.cognitbackend.dto.request.VerifyOtpRequest;
+import org.ritika.cognitbackend.dto.request.*;
 import org.ritika.cognitbackend.dto.response.AuthResponse;
 
 /**
@@ -39,4 +36,7 @@ public interface AuthService {
 
     /** Second factor: validate OTP and exchange temp token for real tokens. */
     AuthResponse verifyOtp(VerifyOtpRequest request);
+
+    void forgotPassword(ForgotPasswordRequest request);
+    void resetPassword(ResetPasswordRequest request);
 }

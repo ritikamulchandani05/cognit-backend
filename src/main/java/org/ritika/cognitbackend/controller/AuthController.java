@@ -2,10 +2,7 @@ package org.ritika.cognitbackend.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.ritika.cognitbackend.dto.request.LoginRequest;
-import org.ritika.cognitbackend.dto.request.RefreshTokenRequest;
-import org.ritika.cognitbackend.dto.request.RegisterRequest;
-import org.ritika.cognitbackend.dto.request.VerifyOtpRequest;
+import org.ritika.cognitbackend.dto.request.*;
 import org.ritika.cognitbackend.dto.response.AuthResponse;
 import org.ritika.cognitbackend.service.AuthService;
 import org.springframework.http.HttpStatus;
@@ -65,5 +62,17 @@ public class AuthController {
     @PostMapping("/verify-otp")
     public ResponseEntity<AuthResponse> verifyOtp(@Valid @RequestBody VerifyOtpRequest request) {
         return ResponseEntity.ok(authService.verifyOtp(request));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.forgotPassword(request);
+        return ResponseEntity.accepted().build();
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ResponseEntity.noContent().build();
     }
 }
