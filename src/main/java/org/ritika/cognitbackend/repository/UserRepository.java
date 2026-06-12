@@ -2,6 +2,7 @@ package org.ritika.cognitbackend.repository;
 
 import org.ritika.cognitbackend.entity.User;
 import org.ritika.cognitbackend.enums.Role;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -37,4 +38,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Modifying
     @Query("UPDATE User u SET u.updatedAt = :updatedAt WHERE u.id = :id")
     void backdateUpdatedAt(@Param("id") Long id, @Param("updatedAt") LocalDateTime updatedAt);
+
+    @Query("SELECT u FROM User u WHERE u.isDeleted = false ORDER BY u.id ASC")
+    List<User> findAllActive(Pageable pageable);
 }

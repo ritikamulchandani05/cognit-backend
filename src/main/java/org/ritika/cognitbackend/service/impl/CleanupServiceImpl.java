@@ -1,17 +1,23 @@
 package org.ritika.cognitbackend.service.impl;
 
+import jakarta.validation.constraints.Email;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ritika.cognitbackend.entity.Post;
+import org.ritika.cognitbackend.entity.User;
 import org.ritika.cognitbackend.repository.CommentRepository;
 import org.ritika.cognitbackend.repository.OtpRepository;
 import org.ritika.cognitbackend.repository.PostRepository;
 import org.ritika.cognitbackend.repository.UserRepository;
 import org.ritika.cognitbackend.service.CleanupService;
+import org.ritika.cognitbackend.service.EmailService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -21,6 +27,7 @@ public class CleanupServiceImpl implements CleanupService {
     private final UserRepository userRepository;
     private final OtpRepository otpRepository;
     private final CommentRepository commentRepository;
+    private final EmailService emailService;
 
     /**
      * Number of days a soft-deleted record is kept before hard-deletion.
@@ -99,5 +106,41 @@ public class CleanupServiceImpl implements CleanupService {
         int deleted = commentRepository.hardDeleteByIsDeletedTrueAndUpdatedAtBefore(cutoff);
         long duration = System.currentTimeMillis() - start;
         log.info("[CleanupJob] purgeDeletedComments completed - {} comment(s) hard-deleted in {}ms", deleted, duration);
+    }
+
+    @Value("${weekly-digest.max-posts:5}")
+    private int digestMaxPosts;
+
+    @Value("${weekly-digest.batch-size:200}")
+    private int digestBatchSize;
+
+    @Override
+    @Scheduled(cron = "${cleanup.cron.weekly-digest}")
+    @Transactional(readOnly = true)
+    public void sendWeeklyDigests() {
+        long start = System.currentTimeMillis();
+        log.info("[CleanupJob] sendWeeklyDigests starting");
+
+        LocalDateTime since  = LocalDateTime.now().minusDays(7);
+        List<Post> topPosts  = postRepository.findTopPublishedSince(
+                since, PageRequest.of(0, digestMaxPosts));
+
+        if (topPosts.isEmpty()) {
+            log.info("[CleanupJob] sendWeeklyDigests - no posts this week, skipping");
+            return;
+        }
+
+        int page = 0, sent = 0;
+        List<User> batch;
+        do {
+            batch = userRepository.findAllActive(PageRequest.of(page++, digestBatchSize));
+            for (User user : batch) {
+                emailService.sendWeeklyDigest(user, topPosts);
+                sent++;
+            }
+        } while (batch.size() == digestBatchSize);
+
+        long duration = System.currentTimeMillis() - start;
+        log.info("[CleanupJob] sendWeeklyDigests completed - {} email(s) queued in {}ms", sent, duration);
     }
 }

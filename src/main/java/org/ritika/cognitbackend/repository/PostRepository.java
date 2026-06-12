@@ -80,5 +80,14 @@ public interface PostRepository extends JpaRepository<Post, Long>,SluggableRepos
     @Modifying
     @Query("UPDATE Post p SET p.updatedAt = :updatedAt WHERE p.id = :id")
     void backdateUpdatedAt(@Param("id") Long id, @Param("updatedAt") LocalDateTime updatedAt);
+
+    @Query("""
+       SELECT p FROM Post p
+       WHERE p.isDeleted = false
+         AND p.status = 'PUBLISHED'
+         AND p.publishedAt >= :since
+       ORDER BY p.likeCount DESC, p.viewCount DESC
+       """)
+    List<Post> findTopPublishedSince(@Param("since") LocalDateTime since, Pageable pageable);
 }
 
