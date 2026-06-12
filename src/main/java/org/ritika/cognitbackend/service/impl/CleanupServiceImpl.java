@@ -2,6 +2,7 @@ package org.ritika.cognitbackend.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ritika.cognitbackend.repository.OtpRepository;
 import org.ritika.cognitbackend.repository.PostRepository;
 import org.ritika.cognitbackend.repository.UserRepository;
 import org.ritika.cognitbackend.service.CleanupService;
@@ -17,6 +18,7 @@ import java.time.LocalDateTime;
 public class CleanupServiceImpl implements CleanupService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final OtpRepository otpRepository;
 
     /**
      * Number of days a soft-deleted record is kept before hard-deletion.
@@ -69,5 +71,17 @@ public class CleanupServiceImpl implements CleanupService {
         long duration = System.currentTimeMillis() - start;
         log.info("[CleanupJob] logDatabaseStats complete in {}ms - " + "soft-deleted posts: {}, soft-deleted users:{}", duration, softDeletedPosts, softDeletedUsers);
 
+    }
+    @Override
+    @Scheduled(cron = "${cleanup.cron.purge-otps}")
+    @Transactional
+    public void purgeExpiredOtps() {
+        long start = System.currentTimeMillis();
+        log.info("[CleanupJob] purgeExpiredOtps starting");
+        // 2-3 day buffer: keep rows for debugging even after expiry
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(2);
+        int deleted = otpRepository.deleteExpiredOtps(cutoff);
+        long duration = System.currentTimeMillis() - start;
+        log.info("[CleanupJob] purgeExpiredOtps completed - {} row(s) removed in {}ms", deleted, duration);
     }
 }

@@ -19,4 +19,7 @@ public class AuthResponse {
 
     private Long expiresIn;
     private UserResponse user;
+
+    private Boolean requires2fa = true;
+    private String  tempToken;   // only populated when requires2fa == true
 }

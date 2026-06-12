@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.ritika.cognitbackend.dto.request.LoginRequest;
 import org.ritika.cognitbackend.dto.request.RefreshTokenRequest;
 import org.ritika.cognitbackend.dto.request.RegisterRequest;
+import org.ritika.cognitbackend.dto.request.VerifyOtpRequest;
 import org.ritika.cognitbackend.dto.response.AuthResponse;
 import org.ritika.cognitbackend.service.AuthService;
 import org.springframework.http.HttpStatus;
@@ -59,5 +60,10 @@ public class AuthController {
     public ResponseEntity<AuthResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
         AuthResponse response = authService.refreshToken(request);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<AuthResponse> verifyOtp(@Valid @RequestBody VerifyOtpRequest request) {
+        return ResponseEntity.ok(authService.verifyOtp(request));
     }
 }

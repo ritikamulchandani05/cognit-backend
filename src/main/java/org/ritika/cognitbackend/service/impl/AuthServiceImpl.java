@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.ritika.cognitbackend.dto.request.LoginRequest;
 import org.ritika.cognitbackend.dto.request.RefreshTokenRequest;
 import org.ritika.cognitbackend.dto.request.RegisterRequest;
+import org.ritika.cognitbackend.dto.request.VerifyOtpRequest;
 import org.ritika.cognitbackend.dto.response.AuthResponse;
 import org.ritika.cognitbackend.dto.response.UserResponse;
 import org.ritika.cognitbackend.entity.User;
@@ -15,6 +16,7 @@ import org.ritika.cognitbackend.exception.UnauthorizedException;
 import org.ritika.cognitbackend.security.JwtUtil;
 import org.ritika.cognitbackend.service.AuthService;
 import org.ritika.cognitbackend.service.EmailService;
+import org.ritika.cognitbackend.service.OtpService;
 import org.ritika.cognitbackend.service.UserService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -34,6 +36,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final EmailService emailService;
+    private final OtpService otpService;
 
     @Value("${jwt.access-token-expiration}")
     private long accessTokenExpiration;
@@ -69,16 +72,23 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
-        // Find user by email
         User user = userService.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
 
-        // Verify password
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new UnauthorizedException("Invalid email or password");
         }
 
-        // Generate tokens and return response
+        // 2FA gate
+        if (Boolean.TRUE.equals(user.getTwoFaEnabled())) {
+            otpService.generateAndSend(user.getId());
+            String tempToken = jwtUtil.generateTempToken(user);   // short TTL, type="temp"
+            return AuthResponse.builder()
+                    .requires2fa(true)
+                    .tempToken(tempToken)
+                    .build();
+        }
+
         return buildAuthResponse(user);
     }
 
@@ -126,5 +136,28 @@ public class AuthServiceImpl implements AuthService {
                 .user(UserResponse.fromEntity(user))
                 .build();
     }
+
+    @Override
+    @Transactional
+    public AuthResponse verifyOtp(VerifyOtpRequest request) {
+        if (!jwtUtil.validateToken(request.getTempToken())) {
+            throw new UnauthorizedException("Invalid or expired session");
+        }
+        Claims claims = jwtUtil.extractAllClaims(request.getTempToken());
+        if (!"temp".equals(claims.get("type", String.class))) {
+            throw new UnauthorizedException("Invalid token type");
+        }
+
+        Long userId = jwtUtil.getUserIdFromToken(request.getTempToken());
+        boolean ok  = otpService.verify(userId, request.getOtp());
+        if (!ok) {
+            throw new UnauthorizedException("Invalid or expired OTP");
+        }
+
+        User user = userService.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return buildAuthResponse(user);
+    }
+
 }
 

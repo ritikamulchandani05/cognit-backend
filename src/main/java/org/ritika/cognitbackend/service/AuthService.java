@@ -4,6 +4,7 @@ package org.ritika.cognitbackend.service;
 import org.ritika.cognitbackend.dto.request.LoginRequest;
 import org.ritika.cognitbackend.dto.request.RefreshTokenRequest;
 import org.ritika.cognitbackend.dto.request.RegisterRequest;
+import org.ritika.cognitbackend.dto.request.VerifyOtpRequest;
 import org.ritika.cognitbackend.dto.response.AuthResponse;
 
 /**
@@ -35,4 +36,7 @@ public interface AuthService {
      * @return AuthResponse containing new access token, refresh token, and user info
      */
     AuthResponse refreshToken(RefreshTokenRequest request);
+
+    /** Second factor: validate OTP and exchange temp token for real tokens. */
+    AuthResponse verifyOtp(VerifyOtpRequest request);
 }

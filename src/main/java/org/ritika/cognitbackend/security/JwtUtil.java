@@ -90,4 +90,14 @@ public class JwtUtil {
         Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
+
+    public String generateTempToken(User user) {
+        return Jwts.builder()
+                .subject(String.valueOf(user.getId()))
+                .claim("type", "temp")
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + 120_000L))
+                .signWith(getSigningKey())
+                .compact();
+    }
 }
