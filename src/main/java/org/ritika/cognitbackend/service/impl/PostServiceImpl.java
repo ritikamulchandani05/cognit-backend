@@ -4,19 +4,13 @@ import org.ritika.cognitbackend.dto.request.CreatePostRequest;
 import org.ritika.cognitbackend.dto.request.UpdatePostRequest;
 import org.ritika.cognitbackend.dto.response.PostResponse;
 import org.ritika.cognitbackend.dto.response.RestPage;
-import org.ritika.cognitbackend.entity.Category;
-import org.ritika.cognitbackend.entity.Post;
-import org.ritika.cognitbackend.entity.Tag;
-import org.ritika.cognitbackend.entity.User;
+import org.ritika.cognitbackend.entity.*;
 import org.ritika.cognitbackend.enums.PostStatus;
 import org.ritika.cognitbackend.enums.Role;
 import org.ritika.cognitbackend.exception.ResourceNotFoundException;
 import org.ritika.cognitbackend.exception.UnauthorizedException;
 import org.ritika.cognitbackend.mapper.PostMapper;
-import org.ritika.cognitbackend.repository.CategoryRepository;
-import org.ritika.cognitbackend.repository.PostRepository;
-import org.ritika.cognitbackend.repository.TagRepository;
-import org.ritika.cognitbackend.repository.UserRepository;
+import org.ritika.cognitbackend.repository.*;
 import org.ritika.cognitbackend.service.FileStorageService;
 import org.ritika.cognitbackend.service.PostService;
 import org.ritika.cognitbackend.util.SlugUtil;
@@ -27,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -43,6 +38,8 @@ public class PostServiceImpl implements PostService {
     private final TagRepository tagRepository;
     private final PostMapper postMapper;
     private final FileStorageService fileStorageService;
+    private final PostLikeRepository postLikeRepository;
+    private final PostViewRepository postViewRepository;
 
     @Override
     @Transactional
@@ -345,5 +342,56 @@ public class PostServiceImpl implements PostService {
         Post savedPost = postRepository.save(post);
 
         return postMapper.toResponse(savedPost);
+    }
+
+    @Override
+    @Transactional
+    public boolean toggleLike(Long postId, Long userId) {
+        if (!postRepository.existsById(postId)) {
+            throw new ResourceNotFoundException("Post", "id", postId);
+        }
+        if (postLikeRepository.existsByPostIdAndUserId(postId, userId)) {
+            postLikeRepository.findByPostIdAndUserId(postId, userId)
+                    .ifPresent(postLikeRepository::delete);
+            postRepository.decrementLikeCount(postId);
+            return false;
+        } else {
+            Post post = postRepository.getReferenceById(postId);
+            User user = userRepository.getReferenceById(userId);
+            postLikeRepository.save(PostLike.builder().post(post).user(user).build());
+            postRepository.incrementLikeCount(postId);
+            return true;
+        }
+    }
+
+    @Override
+    @Transactional
+    public void recordView(Long postId, Long userId, String fingerprint) {
+        LocalDate today = LocalDate.now();
+
+        boolean alreadySeen = (userId != null)
+                ? postViewRepository.existsByPostIdAndUserIdAndViewedOn(postId, userId, today)
+                : postViewRepository.existsByPostIdAndFingerprintAndViewedOn(postId, fingerprint, today);
+
+        if (alreadySeen) {
+            return; // one view per day per identity
+        }
+
+        Post post = postRepository.getReferenceById(postId);
+        User user = (userId != null) ? userRepository.getReferenceById(userId) : null;
+
+        postViewRepository.save(PostView.builder()
+                .post(post)
+                .user(user)
+                .fingerprint(userId == null ? fingerprint : null)
+                .viewedOn(today)
+                .build());
+
+        postRepository.incrementViewCount(postId);
+    }
+
+    @Override
+    public boolean hasLiked(Long postId, Long userId) {
+        return postLikeRepository.existsByPostIdAndUserId(postId, userId);
     }
 }

@@ -46,5 +46,11 @@ public interface PostService {
 
     PostResponse publishPost(Long postId, Long userId);
     PostResponse uploadFeaturedImage(Long postId, MultipartFile file, Long userId);
+
+    boolean toggleLike(Long postId, Long userId);
+
+    void recordView(Long postId, Long userId, String fingerprint);
+
+    boolean hasLiked(Long postId, Long userId);
 }
 
