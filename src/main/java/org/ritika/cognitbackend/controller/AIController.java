@@ -7,6 +7,7 @@ import org.ritika.cognitbackend.dto.ai.*;
 import org.ritika.cognitbackend.entity.User;
 import org.ritika.cognitbackend.service.AIService;
 import org.ritika.cognitbackend.service.AIUsageService;
+import org.ritika.cognitbackend.service.ImageGenerationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -28,7 +29,7 @@ public class AIController {
 
     private final AIService aiService;
     private final AIUsageService aiUsageService;
-//    private final ImageGenerationService imageGenerationService;
+    private final ImageGenerationService imageGenerationService;
 
     @GetMapping("/test")
     @PreAuthorize("hasRole('ADMIN')")
@@ -95,18 +96,18 @@ public class AIController {
         return ResponseEntity.ok(Map.of("tags", aiService.suggestTags(request)));
     }
 
-//    @PostMapping("/generate-image")
-//    @PreAuthorize("isAuthenticated()")
-//    public ResponseEntity<GenerateImageResponse> generateImage(
-//            @Valid @RequestBody GenerateImageRequest request) {
-//
-//        User user = currentUser();
-//        // Image generation counts as 2 uses — two AI calls (prompt agent + image model)
-//        aiUsageService.checkAndIncrementUsage(user.getId(), user.getRole());
-//        aiUsageService.checkAndIncrementUsage(user.getId(), user.getRole());
-//
-//        return ResponseEntity.ok(imageGenerationService.generateFeaturedImage(request));
-//    }
+    @PostMapping("/generate-image")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<GenerateImageResponse> generateImage(
+            @Valid @RequestBody GenerateImageRequest request) {
+
+        User user = currentUser();
+        // Image generation counts as 2 uses — two AI calls (prompt agent + image model)
+        aiUsageService.checkAndIncrementUsage(user.getId(), user.getRole());
+        aiUsageService.checkAndIncrementUsage(user.getId(), user.getRole());
+
+        return ResponseEntity.ok(imageGenerationService.generateFeaturedImage(request));
+    }
 
     @GetMapping("/usage")
     @PreAuthorize("isAuthenticated()")
