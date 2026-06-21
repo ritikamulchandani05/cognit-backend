@@ -51,7 +51,7 @@ public class AuthServiceImpl implements AuthService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .name(request.getName())
-                .role(Role.SUBSCRIBER)
+                .role(resolveSignupRole(request.getRole()))
                 .emailVerified(false)
                 .isDeleted(false)
                 .build();
@@ -113,6 +113,24 @@ public class AuthServiceImpl implements AuthService {
 
         // Generate new tokens and return response
         return buildAuthResponse(user);
+    }
+
+    /**
+     * Resolve the role a new user signs up as. RegisterRequest.role is already
+     * constrained to "SUBSCRIBER"/"AUTHOR" by bean validation, so ADMIN can
+     * never reach here — this is a second guard against that regardless.
+     */
+    private Role resolveSignupRole(String requestedRole) {
+        if (requestedRole == null || requestedRole.isBlank()) {
+            return Role.SUBSCRIBER;
+        }
+
+        Role role = Role.valueOf(requestedRole);
+        if (role == Role.ADMIN) {
+            throw new BadRequestException("Cannot self-register as ADMIN");
+        }
+
+        return role;
     }
 
     /**

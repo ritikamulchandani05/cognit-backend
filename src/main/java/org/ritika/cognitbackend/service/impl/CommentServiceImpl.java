@@ -122,4 +122,12 @@ public class CommentServiceImpl implements CommentService {
         return commentRepository.findByAuthorIdAndIsDeletedFalse(userId, pageable)
                 .map(CommentResponse::fromEntity);
     }
+
+    @Override
+    public Page<CommentResponse> getAllCommentsForAdmin(int page, int size) {
+        // findAllActive() already has its own ORDER BY, so the Pageable here must be unsorted.
+        PageRequest pageable = PageRequest.of(page, size);
+        return commentRepository.findAllActive(pageable)
+                .map(CommentResponse::fromEntity);
+    }
 }

@@ -29,6 +29,10 @@ public interface PostService {
     RestPage<PostResponse> getAllPosts(int page, int size, String sortBy, String sortDir);
 
 
+    // Admin moderation view: every non-deleted post, any status, any author.
+    Page<PostResponse> getAllPostsForAdmin(int page, int size, String sortBy, String sortDir);
+
+
     Page<PostResponse> getPostsByUser(Long userId, int page, int size);
 
 

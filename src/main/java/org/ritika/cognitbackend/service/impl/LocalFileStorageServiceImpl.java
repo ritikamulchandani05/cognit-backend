@@ -88,8 +88,9 @@ public class LocalFileStorageServiceImpl implements FileStorageService {
             throw new FileStorageException("Failed to store file: " + uniqueFileName, e);
         }
 
-        // 5. Return relative path (e.g., "posts/550e480-.....jpg")
-        return safeDirectory + "/" + uniqueFileName;
+        // 5. Return a URL path servable via the /uploads/** resource handler
+        // (e.g., "/uploads/posts/550e480-.....jpg")
+        return "/uploads/" + safeDirectory + "/" + uniqueFileName;
     }
 
     @Override
@@ -183,7 +184,13 @@ public class LocalFileStorageServiceImpl implements FileStorageService {
     }
 
     private Path resolveAndValidatePath(String filePath) {
-        Path resolved = uploadRootPath.resolve(filePath).normalize();
+        // storeFile() returns paths prefixed with "/uploads/" (the servable URL);
+        // strip that back off to resolve against the on-disk upload root.
+        String relative = filePath.startsWith("/uploads/")
+                ? filePath.substring("/uploads/".length())
+                : filePath;
+
+        Path resolved = uploadRootPath.resolve(relative).normalize();
         if(!resolved.startsWith(uploadRootPath)) {
             throw new BadRequestException("Invalid file path: " + filePath);
         }

@@ -69,6 +69,23 @@ public class PostController {
     }
 
 
+    /**
+     * Admin moderation view: every non-deleted post, any status, any author.
+     */
+    @GetMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<PostResponse>> getAllPostsForAdmin(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+
+        Page<PostResponse> posts = postService.getAllPostsForAdmin(page, size, sortBy, sortDir);
+
+        return ResponseEntity.ok(posts);
+    }
+
+
     @GetMapping("/{id}")
     public ResponseEntity<PostResponse> getPostById(@PathVariable Long id) {
         log.info("Fetching post by ID: {}", id);

@@ -161,8 +161,13 @@ public class PostServiceImpl implements PostService {
                 .filter(p -> !p.getIsDeleted())
                 .orElseThrow(() -> new ResourceNotFoundException("Post", "id", postId));
 
-        // Check if user is the author
-        if (!post.getUser().getId().equals(userId)) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+
+        // Author of the post, or an admin, may delete it
+        boolean isOwner = post.getUser().getId().equals(userId);
+        boolean isAdmin = user.getRole() == Role.ADMIN;
+        if (!isOwner && !isAdmin) {
             throw new UnauthorizedException("You are not authorized to delete this post");
         }
 
@@ -205,6 +210,19 @@ public class PostServiceImpl implements PostService {
         );
         // wrapped in RestPage so jackson can deserialize it on cache read-back
         return new RestPage<>(posts.map(postMapper::toResponse));
+    }
+
+    @Override
+    public Page<PostResponse> getAllPostsForAdmin(int page, int size, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<Post> posts = postRepository.findByIsDeletedFalse(pageable);
+
+        return posts.map(postMapper::toResponse);
     }
 
     @Override

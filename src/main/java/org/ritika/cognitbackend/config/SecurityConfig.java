@@ -53,6 +53,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/posts/*/view").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/posts/*/like").authenticated()
 
+                        // Admin moderation views
+                        .requestMatchers(HttpMethod.GET, "/api/v1/posts/admin").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/comments").hasRole("ADMIN")
+
                         // Posts - reading published posts is public, all writes require a token + role
                         .requestMatchers(HttpMethod.GET,"/api/v1/posts/**").permitAll()
                         .requestMatchers(HttpMethod.POST,"/api/v1/posts/**").hasAnyRole("AUTHOR", "ADMIN")
@@ -73,6 +77,9 @@ public class SecurityConfig {
 
                         .requestMatchers("/swagger-ui/**","/v3/api-docs/**",
                                 "/swagger-ui.html").permitAll()
+
+                        // Uploaded media (featured images, avatars) is publicly viewable
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

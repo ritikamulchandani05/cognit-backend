@@ -16,6 +16,7 @@ public class CommentResponse {
 
     private Long id;
     private Long postId;
+    private String postTitle;
     private AuthorResponse author;
     private String body;
     private LocalDateTime createdAt;
@@ -25,6 +26,7 @@ public class CommentResponse {
         return CommentResponse.builder()
                 .id(comment.getId())
                 .postId(comment.getPost().getId())
+                .postTitle(comment.getPost().getTitle())
                 .author(AuthorResponse.fromEntity(comment.getAuthor()))
                 .body(comment.getBody())
                 .createdAt(comment.getCreatedAt())

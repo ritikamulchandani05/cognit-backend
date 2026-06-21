@@ -17,6 +17,12 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     @Query("SELECT c FROM Comment c JOIN FETCH c.author WHERE c.post.id = :postId AND c.isDeleted = false ORDER BY c.createdAt ASC")
     Page<Comment> findByPostIdAndIsDeletedFalse(@Param("postId") Long postId, Pageable pageable);
 
+    @Query(
+            value = "SELECT c FROM Comment c JOIN FETCH c.author JOIN FETCH c.post WHERE c.isDeleted = false ORDER BY c.createdAt DESC",
+            countQuery = "SELECT COUNT(c) FROM Comment c WHERE c.isDeleted = false"
+    )
+    Page<Comment> findAllActive(Pageable pageable);
+
     long countByPostIdAndIsDeletedFalse(Long postId);
 
     @Modifying

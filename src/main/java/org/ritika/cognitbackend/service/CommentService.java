@@ -16,4 +16,7 @@ public interface CommentService {
     void deleteComment(Long commentId, Long userId);
 
     Page<CommentResponse> getCommentsByUser(Long userId, int page, int size);
+
+    // Admin moderation view: every non-deleted comment, across all posts.
+    Page<CommentResponse> getAllCommentsForAdmin(int page, int size);
 }
