@@ -15,16 +15,22 @@ RUN ./mvnw clean package -DskipTests -B
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-RUN addgroup -S spring && adduser -S spring -G spring
+# su-exec lets the entrypoint start as root, fix the volume mount's
+# ownership, then drop back to the unprivileged user to run the app.
+RUN apk add --no-cache su-exec && \
+    addgroup -S spring && adduser -S spring -G spring
 COPY --from=build /app/target/cognit-backend-*.jar app.jar
 # file.upload-dir defaults to a relative "uploads" folder under the
 # working directory — it needs to exist and be writable by the
 # non-root user before LocalFileStorageServiceImpl creates it at boot.
 RUN mkdir -p /app/uploads && chown -R spring:spring /app
-USER spring
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 8080
 
-# JAVA_OPTS lets you pass extra flags (e.g. -Xmx400m on a memory-capped
-# host) via an env var without rebuilding the image.
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+# The entrypoint runs as root only long enough to chown the (root-owned)
+# Railway volume at /app/uploads, then exec's the JVM as `spring`.
+# JAVA_OPTS lets you pass extra flags (e.g. -XX:MaxRAMPercentage=75) via an
+# env var without rebuilding the image.
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

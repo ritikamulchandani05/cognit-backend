@@ -115,11 +115,10 @@ railway up --service cognit-backend
   service **Deploy logs**. Usually Flyway can't reach Postgres (wrong reference
   variable) or seeding is still enabled. `/actuator/health` reports `DOWN` while
   Postgres or Redis is unreachable.
-- **`Permission denied` writing to `/app/uploads`** — the container runs as the
-  non-root `spring` user. In the volume settings confirm the mount path is exactly
-  `/app/uploads`; Railway chowns the volume to the image user. If it persists,
-  temporarily remove the `USER spring` line in the `Dockerfile`, redeploy once,
-  then add it back.
+- **`AccessDeniedException: /app/uploads/...`** — the Railway volume mounts as
+  `root`, the app runs as `spring`. `docker-entrypoint.sh` chowns the mount on
+  every boot, so just make sure the volume mount path is exactly `/app/uploads`
+  and that `docker-entrypoint.sh` was committed.
 - **Out of memory on boot** — set `JAVA_OPTS=-XX:MaxRAMPercentage=75` in the
   service variables, or bump the plan.
 - **CORS errors from the frontend** — add the deployed frontend/admin origins to
