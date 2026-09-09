@@ -51,6 +51,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
 
+                        // Actuator health endpoint - polled by Railway's deploy healthcheck
+                        .requestMatchers("/actuator/health/**").permitAll()
+
                         // comments
                         .requestMatchers(HttpMethod.GET,"/api/v1/posts/*/comments/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/posts/*/comments/**").authenticated()

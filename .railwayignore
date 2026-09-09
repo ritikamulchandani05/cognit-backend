@@ -1,0 +1,11 @@
+# Files not needed by the Docker build - keeps `railway up` uploads small.
+target/
+uploads/
+.git/
+.github/
+.idea/
+.DS_Store
+benchmarking/
+HELP.md
+ARCHITECTURE_BLUEPRINT_PROMPT.md
+*.iml
